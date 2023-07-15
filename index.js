@@ -12,10 +12,26 @@ bot.start((ctx) => {
 bot.hears(/^[A-Z]+$/i, async (ctx) => {
     const clientCurCode = ctx.message.text;
     const currency =cc.code(clientCurCode);
+    console.log(currency);
+    //check for existing currency
+    if(!currency){
+        return ctx.reply('Currency didnt found');
+    }
     try {
-        const response = await axios.get('https://api.monobank.ua/bank/currency');
-        const currencyObj = response.data[0];
-        return ctx.reply(JSON.stringify(currencyObj));
+        const currencyObj = await axios.get('https://api.monobank.ua/bank/currency');
+        const foundCurrency = currencyObj.data.find((cur)=>{
+            return cur.currencyCodeA.toString() === currency.number;
+        })
+        if(!foundCurrency){
+            return ctx.reply('Currency didnt found in Monobank API');
+        }else{
+            //return ctx.reply(JSON.stringify(foundCurrency));
+            return ctx.replyWithMarkdown (
+        `Currency : *${currency.code}*
+Rate Buy : *${foundCurrency.rateBuy}*
+Rate Sell : *${foundCurrency.rateSell}*
+            `);
+        }
     } catch (err) {
         return ctx.reply(err.message);
     }
